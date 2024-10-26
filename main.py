@@ -15,7 +15,8 @@ def main():
         print("1. combine.py")
         print("2. dataprocessing.py")
         print("3. k-anonymity.py")
-        print("4. Exit")
+        print("4. k-anonymity.py")
+        print("5. Exit")
         
         # Get the user's choice
         choice = input("Enter 1, 2, 3 or 4: ")
@@ -24,9 +25,11 @@ def main():
             run_file("combine.py")
         elif choice == '2':
             run_file("dataprocessing.py")
-             elif choice == '3':
+        elif choice == '3':
             run_file("k-anonymity.py")
         elif choice == '4':
+            run_file("k-anonymity.py")
+        elif choice == '5':
             print("Exiting the program.")
             sys.exit(0)
         else:
