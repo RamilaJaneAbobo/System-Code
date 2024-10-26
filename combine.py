@@ -58,6 +58,20 @@ def mask_identifiers(id_data):
     
     return masked_id_data
 
+# Data Masking for Disease
+def mask_disease(sensitive_data):
+    sensitive_data_masked = sensitive_data.copy()
+    
+    if 'Disease' in sensitive_data_masked.columns:
+        # Generate unique labels for each disease
+        unique_diseases = sensitive_data_masked['Disease'].unique()
+        disease_mapping = {disease: f"Condition-{i+1}" for i, disease in enumerate(unique_diseases)}
+        
+        # Apply the mapping to mask the Disease column
+        sensitive_data_masked['Disease'] = sensitive_data_masked['Disease'].map(disease_mapping)
+    
+    return sensitive_data_masked
+
 # --- Combined Function to Anonymize Data ---
 
 def anonymize_data(id_data, qi_data, sensitive_data):
@@ -69,9 +83,12 @@ def anonymize_data(id_data, qi_data, sensitive_data):
     
     # Step 3: Mask Identifiers
     id_masked = mask_identifiers(id_data)
+
+     # Step 4: Mask Disease
+    sensitive_masked = mask_disease(sensitive_suppressed)
     
     # Combine the data into one anonymized DataFrame
-    anonymized_data = pd.concat([id_masked, qi_generalized, sensitive_suppressed], axis=1)
+    anonymized_data = pd.concat([id_masked, qi_generalized, sensitive_masked], axis=1)
     
     return anonymized_data
 
