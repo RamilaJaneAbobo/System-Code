@@ -2,10 +2,12 @@ import numpy as np
 import pandas as pd
 
 # Dictionary to store the original ID mappings for unmasking purposes
+
 id_map = {}
 name_map = {}
 
 # Data Processing Code
+
 def load_data(file_path):
     return pd.read_csv(file_path)
 
@@ -17,6 +19,7 @@ def preprocess_data(df, identifiers, quasi_identifiers, sensitive_attributes):
     return id_data, qi_data, sensitive_data
 
 # Generalization for Quasi-Identifiers (QI)
+
 def generalize_data(qi_data):
     qi_generalized = qi_data.copy()
     if 'AGE' in qi_generalized.columns:
@@ -28,6 +31,7 @@ def generalize_data(qi_data):
     return qi_generalized
 
 # Suppression for Sensitive Data
+
 def suppress_data(sensitive_data, suppression_threshold=2):
     sensitive_suppressed = sensitive_data.copy()
     for col in sensitive_suppressed.columns:
@@ -37,6 +41,7 @@ def suppress_data(sensitive_data, suppression_threshold=2):
     return sensitive_suppressed
 
 # Data Masking for Identifiers (ID)
+
 def mask_identifiers(id_data):
     masked_id_data = id_data.copy()
     if 'ID' in masked_id_data.columns:
@@ -44,6 +49,20 @@ def mask_identifiers(id_data):
     if 'NAME' in masked_id_data.columns:
         masked_id_data['NAME'] = masked_id_data['NAME'].apply(lambda x: mask_name(x))
     return masked_id_data
+
+# Data Masking for Disease
+def mask_disease(sensitive_data):
+    sensitive_data_masked = sensitive_data.copy()
+    
+    if 'Disease' in sensitive_data_masked.columns:
+        # Generate unique labels for each disease
+        unique_diseases = sensitive_data_masked['Disease'].unique()
+        disease_mapping = {disease: f"Condition-{i+1}" for i, disease in enumerate(unique_diseases)}
+        
+        # Apply the mapping to mask the Disease column
+        sensitive_data_masked['Disease'] = sensitive_data_masked['Disease'].map(disease_mapping)
+    
+    return sensitive_data_masked
 
 def mask_id(original_id):
     masked_id = '***-**-' + str(original_id)[-4:]
@@ -56,6 +75,7 @@ def mask_name(original_name):
     return masked_name
 
 # Function to unmask data using the stored mappings
+
 def unmask_identifiers(masked_data):
     unmasked_data = masked_data.copy()
     if 'ID' in unmasked_data.columns:
@@ -65,6 +85,7 @@ def unmask_identifiers(masked_data):
     return unmasked_data
 
 # Enforce k-anonymity
+
 def enforce_k_anonymity(qi_data, k):
     qi_anonymized = qi_data.copy()
     unique_counts = qi_anonymized.groupby(list(qi_anonymized.columns)).size()
@@ -87,25 +108,27 @@ def enforce_k_anonymity(qi_data, k):
 
     return qi_anonymized
 
-# Combined Function to Anonymize Data
-def anonymize_data(id_data, qi_data, sensitive_data, k=2):
+def anonymize_data(id_data, qi_data, sensitive_data):
     # Step 1: Generalize Quasi-Identifiers
     qi_generalized = generalize_data(qi_data)
     
-    # Step 2: Enforce k-anonymity
-    qi_anonymized = enforce_k_anonymity(qi_generalized, k)
-    
-    # Step 3: Suppress sensitive attributes where necessary
+    # Step 2: Suppress sensitive attributes where necessary
     sensitive_suppressed = suppress_data(sensitive_data)
     
-    # Step 4: Mask Identifiers
+    # Step 3: Mask Identifiers
     id_masked = mask_identifiers(id_data)
+
+     # Step 4: Mask Disease
+    sensitive_masked = mask_disease(sensitive_suppressed)
     
     # Combine the data into one anonymized DataFrame
-    anonymized_data = pd.concat([id_masked, qi_anonymized, sensitive_suppressed], axis=1)
+    anonymized_data = pd.concat([id_masked, qi_generalized, sensitive_masked], axis=1)
+    
     return anonymized_data
 
+
 # Example Usage
+
 if __name__ == "__main__":
     
     file_path = 'data.csv'
